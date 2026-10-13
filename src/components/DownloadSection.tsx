@@ -11,6 +11,9 @@ import {
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.tsx'
 
+const RELEASE_VERSION = '0.1.0'
+const RELEASE_BASE_URL = `https://github.com/thanghn14/hubbub-chat/releases/download/v${RELEASE_VERSION}`
+
 export const DownloadSection: React.FC = () => {
   const [copiedHash, setCopiedHash] = useState(false)
   const { lang, t } = useLanguage()
@@ -62,8 +65,7 @@ export const DownloadSection: React.FC = () => {
               {/* Action Buttons */}
               <div className="space-y-3">
                 <a
-                  href="/downloads/hubbub-chat_0.1.0_x64_en-US.msi"
-                  download="hubbub-chat_0.1.0_x64_en-US.msi"
+                  href={`${RELEASE_BASE_URL}/hubbub-chat_${RELEASE_VERSION}_x64_en-US.msi`}
                   className="w-full py-3.5 sm:py-4 px-5 sm:px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 dark:bg-gradient-to-r dark:from-indigo-600 dark:to-violet-600 dark:hover:from-indigo-500 dark:hover:to-violet-500 text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-between group border border-transparent dark:border-white/10"
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -78,8 +80,7 @@ export const DownloadSection: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <a
-                    href="/downloads/hubbub-chat_0.1.0_x64-setup.exe"
-                    download="hubbub-chat_0.1.0_x64-setup.exe"
+                    href={`${RELEASE_BASE_URL}/hubbub-chat_${RELEASE_VERSION}_x64-setup.exe`}
                     className="py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-white/[0.03] hover:bg-slate-200 dark:hover:bg-white/[0.07] border border-slate-200 dark:border-white/[0.07] hover:border-indigo-400 dark:hover:border-violet-500/25 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium text-xs transition-all flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2 truncate">
@@ -90,8 +91,7 @@ export const DownloadSection: React.FC = () => {
                   </a>
 
                   <a
-                    href="/downloads/hubbub-chat_0.1.0_x64.portable.zip"
-                    download="hubbub-chat_0.1.0_x64.portable.zip"
+                    href={`${RELEASE_BASE_URL}/hubbub-chat_${RELEASE_VERSION}_x64.portable.zip`}
                     className="py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-white/[0.03] hover:bg-slate-200 dark:hover:bg-white/[0.07] border border-slate-200 dark:border-white/[0.07] hover:border-indigo-400 dark:hover:border-violet-500/25 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium text-xs transition-all flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2 truncate">

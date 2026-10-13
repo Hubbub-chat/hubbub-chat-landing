@@ -72,7 +72,6 @@ npm run preview
 
 ```
 ├── public/
-│   ├── downloads/               # Direct Windows release binaries (.msi, .exe, .zip)
 │   └── favicon.svg              # Bespoke vector logo favicon
 ├── src/
 │   ├── components/
