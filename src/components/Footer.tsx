@@ -144,7 +144,6 @@ export const Footer: React.FC = () => {
             © {new Date().getFullYear()} {t('footer.copyright')}
           </div>
           <div className="flex items-center gap-3">
-            {/* <span>{t('footer.builtWith')}</span> */}
             <span>•</span>
             <span className="text-indigo-600 dark:text-violet-300">{t('footer.privacyFirst')}</span>
           </div>
