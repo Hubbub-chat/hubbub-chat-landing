@@ -1,241 +1,200 @@
-import React from 'react'
-import {
-  ShieldCheck,
-  Zap,
-  FileEdit,
-  Activity,
-  Database,
-  KeyRound,
-  Lock,
-  Flame,
-  CheckCircle2,
-  Cpu,
-  SearchCode
-} from 'lucide-react'
+import React, { useState } from 'react'
+import { Check, X } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.tsx'
+import { useInView } from '../hooks/useInView.ts'
+import { useClock, usePageVisible, usePrefersReducedMotion } from '../hooks/useClock.ts'
+import { SectionHeader } from './SectionHeader.tsx'
+
+interface FeatureRowProps {
+  eyebrow: string
+  title: string
+  desc: string
+  points?: { title: string; desc: string }[]
+  reverse?: boolean
+  children: React.ReactNode
+}
+
+/** Devin-style row: copy on one side, a live visual on the other. */
+const FeatureRow: React.FC<FeatureRowProps> = ({ eyebrow, title, desc, points, reverse, children }) => (
+  <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
+    <div className={reverse ? 'lg:order-2' : ''}>
+      <div className="eyebrow mb-4">{eyebrow}</div>
+      <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight">{title}</h3>
+      <p className="mt-4 text-base sm:text-lg text-muted leading-relaxed">{desc}</p>
+      {points && (
+        <ul className="mt-8 space-y-5">
+          {points.map((p) => (
+            <li key={p.title} className="flex gap-3">
+              <Check className="w-4 h-4 mt-1 shrink-0 text-accent" />
+              <div>
+                <div className="text-sm font-semibold text-fg">{p.title}</div>
+                <div className="text-sm text-muted leading-relaxed">{p.desc}</div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+    <div className={reverse ? 'lg:order-1' : ''}>{children}</div>
+  </div>
+)
+
+const REQUESTS = [
+  { label: 'read ./notes/benchmarks.csv', ok: true },
+  { label: 'fetch https://arxiv.org/abs/2405.21060', ok: true },
+  { label: 'read ../../.ssh/id_rsa', ok: false },
+  { label: 'fetch http://192.168.0.1/admin', ok: false }
+]
+
+/** Requests arrive one by one and are allowed or blocked by the policy engine. */
+const PolicyVisual: React.FC = () => {
+  const { t } = useLanguage()
+  const { ref, inView } = useInView<HTMLDivElement>(0.3)
+  const visible = usePageVisible()
+  const reduced = usePrefersReducedMotion()
+  const [shown, setShown] = useState(0)
+  useClock({
+    running: inView && visible && !reduced,
+    duration: 1300,
+    onDone: () => setShown((n) => (n >= REQUESTS.length + 2 ? 0 : n + 1))
+  })
+  const count = reduced ? REQUESTS.length : shown
+
+  return (
+    <div ref={ref} className="surface rounded-xl overflow-hidden">
+      <div className="px-5 h-11 flex items-center justify-between border-b border-line bg-subtle text-xs text-faint font-mono">
+        <span>policy-engine</span>
+        <span>{t('hero.mockup.policyActive')}</span>
+      </div>
+      <ul className="p-5 space-y-3 min-h-[260px]">
+        {REQUESTS.map((r, i) =>
+          i < count ? (
+            <li
+              key={r.label}
+              className={`animate-slide-in flex items-center justify-between gap-3 rounded-lg border px-4 py-3 ${
+                r.ok ? 'border-line' : 'border-bad/40 bg-bad-soft'
+              }`}
+            >
+              <code className="text-xs font-mono text-fg truncate">{r.label}</code>
+              <span className={`shrink-0 inline-flex items-center gap-1 text-[11px] font-mono font-semibold ${r.ok ? 'text-ok' : 'text-bad'}`}>
+                {r.ok ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                {r.ok ? 'ALLOW' : 'DENY'}
+              </span>
+            </li>
+          ) : (
+            <li key={r.label} className="rounded-lg border border-dashed border-line h-[46px]" aria-hidden="true" />
+          )
+        )}
+      </ul>
+    </div>
+  )
+}
+
+/** Memory bars grow when scrolled into view. */
+const MemoryVisual: React.FC = () => {
+  const { t } = useLanguage()
+  const { ref, inView } = useInView<HTMLDivElement>(0.4)
+  const reduced = usePrefersReducedMotion()
+  const on = inView || reduced
+
+  const bar = (label: string, value: string, pct: number, color: string, delay: number) => (
+    <div>
+      <div className="flex items-center justify-between text-xs font-mono mb-2">
+        <span className="text-muted">{label}</span>
+        <span className="text-fg font-semibold">{value}</span>
+      </div>
+      <div className="h-2 rounded-full bg-line overflow-hidden">
+        <div
+          className={`h-full rounded-full ${color} transition-[width] duration-[1400ms] ease-out`}
+          style={{ width: on ? `${pct}%` : '0%', transitionDelay: `${delay}ms` }}
+        />
+      </div>
+    </div>
+  )
+
+  return (
+    <div ref={ref} className="surface rounded-xl p-6 sm:p-8 space-y-7">
+      {bar(t('bento.card2.hubbubLabel'), '~28 MB', 4, 'bg-accent', 0)}
+      {bar(t('bento.card2.electronLabel'), '450 - 800 MB', 80, 'bg-faint', 200)}
+    </div>
+  )
+}
+
+const REPORT = [
+  { cls: 'text-fg font-semibold text-base', text: '# Mamba-2 vs Attention' },
+  { cls: 'text-muted', text: 'State-space duality trains 8x faster via block matrix multiplication.' },
+  { cls: 'text-fg font-semibold', text: '## Latency @ 32k tokens' },
+  { cls: 'text-muted font-mono text-xs', text: '| Model         | Latency |\n| Mamba-2       | 42 ms   |\n| FlashAttn-2   | 190 ms  |' }
+]
+
+/** A Markdown report typing itself out. */
+const ReportVisual: React.FC = () => {
+  const { ref, inView } = useInView<HTMLDivElement>(0.3)
+  const visible = usePageVisible()
+  const reduced = usePrefersReducedMotion()
+  const total = REPORT.reduce((n, r) => n + r.text.length, 0)
+  const { elapsed } = useClock({ running: inView && visible && !reduced, duration: 9000 })
+  const chars = reduced ? total : Math.min(total, Math.floor((elapsed / 6500) * total))
+
+  let left = chars
+  return (
+    <div ref={ref} className="surface rounded-xl overflow-hidden">
+      <div className="px-5 h-11 flex items-center border-b border-line bg-subtle text-xs text-faint font-mono">
+        Mamba2_vs_Attention.md
+      </div>
+      <div className="p-6 sm:p-8 space-y-4 text-sm min-h-[260px]">
+        {REPORT.map((r, i) => {
+          const part = r.text.slice(0, Math.max(0, left))
+          left -= r.text.length
+          return part ? (
+            <p key={i} className={`${r.cls} whitespace-pre-wrap leading-relaxed`}>
+              {part}
+            </p>
+          ) : null
+        })}
+      </div>
+    </div>
+  )
+}
 
 export const BentoFeatures: React.FC = () => {
   const { t } = useLanguage()
 
   return (
-    <section id="features" className="py-20 sm:py-28 relative overflow-hidden">
-      {/* Background ambient glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[250px] bg-indigo-500/05 dark:bg-violet-600/08 blur-[150px] rounded-full pointer-events-none -z-10" />
+    <section id="features" className="py-24 sm:py-32 lg:py-40 border-t border-line">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
+        <SectionHeader eyebrow={t('bento.badge')} title={t('bento.title')} subtitle={t('bento.subtitle')} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 text-sky-700 dark:text-sky-300 text-xs font-semibold mb-3.5">
-            <Zap className="w-3.5 h-3.5" />
-            <span>{t('bento.badge')}</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {t('bento.title')}
-          </h2>
-          <p className="mt-3.5 sm:mt-4 text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-300/90 leading-relaxed px-2">
-            {t('bento.subtitle')}
-          </p>
+        <div className="mt-20 sm:mt-28 space-y-24 sm:space-y-36">
+          <FeatureRow
+            eyebrow={t('bento.card1.badge')}
+            title={t('bento.card1.title')}
+            desc={t('bento.card1.desc')}
+            points={[
+              { title: t('bento.card1.sub1Title'), desc: t('bento.card1.sub1Desc') },
+              { title: t('bento.card1.sub2Title'), desc: t('bento.card1.sub2Desc') }
+            ]}
+          >
+            <PolicyVisual />
+          </FeatureRow>
+
+          <FeatureRow reverse eyebrow={t('bento.card2.badge')} title={t('bento.card2.title')} desc={t('bento.card2.desc')}>
+            <MemoryVisual />
+          </FeatureRow>
+
+          <FeatureRow eyebrow={t('bento.card3.badge')} title={t('bento.card3.title')} desc={t('bento.card3.desc')}>
+            <ReportVisual />
+          </FeatureRow>
         </div>
 
-        {/* Bento Grid (Optimized for Mobile, Tablet md:grid-cols-2, and Desktop lg:grid-cols-3) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Card 1: Rust Policy Engine */}
-          <div className="md:col-span-2 lg:col-span-2 glass-card glass-card-hover rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-            <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-violet-500/10 border border-indigo-200 dark:border-violet-500/25 flex items-center justify-center text-indigo-600 dark:text-violet-300 mb-5">
-              <ShieldCheck className="w-6 h-6" />
+        <div className="mt-24 sm:mt-36 grid md:grid-cols-3 gap-px bg-line border border-line rounded-xl overflow-hidden">
+          {(['card4', 'card5', 'card6'] as const).map((k) => (
+            <div key={k} className="bg-bg p-7 sm:p-8">
+              <div className="eyebrow mb-3">{t(`bento.${k}.badge`)}</div>
+              <h3 className="text-lg font-semibold text-fg leading-snug">{t(`bento.${k}.title`)}</h3>
+              <p className="mt-3 text-sm text-muted leading-relaxed">{t(`bento.${k}.desc`)}</p>
             </div>
-
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-violet-400">{t('bento.card1.badge')}</span>
-              <span className="text-[10px] bg-indigo-50 dark:bg-violet-500/15 text-indigo-700 dark:text-violet-300 px-2 py-0.5 rounded font-mono border border-indigo-200 dark:border-violet-500/20">
-                {t('bento.card1.tag')}
-              </span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2.5">
-              {t('bento.card1.title')}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300/90 leading-relaxed max-w-xl mb-6">
-              {t('bento.card1.desc')}
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#080a10] border border-slate-200 dark:border-white/[0.06]">
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>{t('bento.card1.sub1Title')}</span>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {t('bento.card1.sub1Desc')}
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#080a10] border border-slate-200 dark:border-white/[0.06]">
-                <div className="flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400 mb-1">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>{t('bento.card1.sub2Title')}</span>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {t('bento.card1.sub2Desc')}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Tauri 2 Native Speed */}
-          <div className="col-span-1 glass-card glass-card-hover rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-            <div className="w-11 h-11 rounded-2xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/25 flex items-center justify-center text-sky-600 dark:text-sky-400 mb-5">
-              <Cpu className="w-6 h-6" />
-            </div>
-
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">{t('bento.card2.badge')}</span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2.5">
-              {t('bento.card2.title')}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300/90 leading-relaxed mb-6">
-              {t('bento.card2.desc')}
-            </p>
-
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#080a10] border border-slate-200 dark:border-white/[0.06] space-y-3 font-mono text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600 dark:text-slate-400">{t('bento.card2.hubbubLabel')}</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">~28 MB</span>
-              </div>
-              <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div className="w-[12%] h-full bg-emerald-500 rounded-full" />
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-slate-500">{t('bento.card2.electronLabel')}</span>
-                <span className="text-rose-500 dark:text-rose-400">450 - 800 MB</span>
-              </div>
-              <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div className="w-[85%] h-full bg-rose-400/80 rounded-full" />
-              </div>
-            </div>
-          </div>
-
-          {/* Card 3: Living Markdown Workspace */}
-          <div className="col-span-1 glass-card glass-card-hover rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-            <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-5">
-              <FileEdit className="w-6 h-6" />
-            </div>
-
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">{t('bento.card3.badge')}</span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2.5">
-              {t('bento.card3.title')}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300/90 leading-relaxed mb-6">
-              {t('bento.card3.desc')}
-            </p>
-
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#080a10] border border-slate-200 dark:border-white/[0.06] text-xs space-y-1.5">
-              <div className="text-slate-800 dark:text-slate-300 font-semibold flex items-center gap-1.5">
-                <Flame className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <span>{t('bento.card3.subTitle')}</span>
-              </div>
-              <p className="text-slate-600 dark:text-slate-400 text-xs">
-                {t('bento.card3.subDesc')}
-              </p>
-            </div>
-          </div>
-
-          {/* Card 4: Run/Step/Trace Engine */}
-          <div className="md:col-span-2 lg:col-span-2 glass-card glass-card-hover rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-            <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/25 flex items-center justify-center text-indigo-600 dark:text-indigo-300 mb-5">
-              <Activity className="w-6 h-6" />
-            </div>
-
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t('bento.card4.badge')}</span>
-              <span className="text-[10px] bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded font-mono border border-indigo-200 dark:border-indigo-500/20">
-                {t('bento.card4.tag')}
-              </span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2.5">
-              {t('bento.card4.title')}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300/90 leading-relaxed max-w-xl mb-6">
-              {t('bento.card4.desc')}
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#080a10] border border-slate-200 dark:border-white/[0.05]">
-                <div className="text-slate-500 dark:text-slate-400 text-[11px] mb-1">{t('bento.card4.sub1Title')}</div>
-                <div className="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">{t('bento.card4.sub1Val')}</div>
-                <div className="text-[10px] text-slate-500 mt-1">{t('bento.card4.sub1Desc')}</div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#080a10] border border-slate-200 dark:border-white/[0.05]">
-                <div className="text-slate-500 dark:text-slate-400 text-[11px] mb-1">{t('bento.card4.sub2Title')}</div>
-                <div className="text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm">{t('bento.card4.sub2Val')}</div>
-                <div className="text-[10px] text-slate-500 mt-1">{t('bento.card4.sub2Desc')}</div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#080a10] border border-slate-200 dark:border-white/[0.05]">
-                <div className="text-slate-500 dark:text-slate-400 text-[11px] mb-1">{t('bento.card4.sub3Title')}</div>
-                <div className="text-indigo-600 dark:text-indigo-300 font-bold text-xs sm:text-sm">{t('bento.card4.sub3Val')}</div>
-                <div className="text-[10px] text-slate-500 mt-1">{t('bento.card4.sub3Desc')}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 5: SQLite FTS5 Instant Search */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-1 glass-card glass-card-hover rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/25 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-5">
-              <Database className="w-6 h-6" />
-            </div>
-
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t('bento.card5.badge')}</span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2.5">
-              {t('bento.card5.title')}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300/90 leading-relaxed mb-6">
-              {t('bento.card5.desc')}
-            </p>
-
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#080a10] border border-slate-200 dark:border-white/[0.06] flex items-center gap-3">
-              <SearchCode className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white">{t('bento.card5.subTitle')}</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">{t('bento.card5.subDesc')}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 6: BYOK & Model Sovereignty */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-2 glass-card glass-card-hover rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-            <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-violet-500/10 border border-indigo-200 dark:border-violet-500/25 flex items-center justify-center text-indigo-600 dark:text-violet-300 mb-5">
-              <KeyRound className="w-6 h-6" />
-            </div>
-
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-violet-400">{t('bento.card6.badge')}</span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2.5">
-              {t('bento.card6.title')}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300/90 leading-relaxed max-w-xl mb-6">
-              {t('bento.card6.desc')}
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              {['Ollama (Offline)', 'llama.cpp', 'Claude 3.7 Sonnet', 'GPT-4o', 'DeepSeek-V3/R1', 'OpenRouter'].map((model) => (
-                <span
-                  key={model}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.07] text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-                >
-                  <Lock className="w-3 h-3 text-indigo-600 dark:text-violet-400" />
-                  <span>{model}</span>
-                </span>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

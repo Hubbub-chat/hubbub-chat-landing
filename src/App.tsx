@@ -9,17 +9,18 @@ import { SecurityArchitecture } from './components/SecurityArchitecture.tsx'
 import { ComparisonTable } from './components/ComparisonTable.tsx'
 import { DownloadSection } from './components/DownloadSection.tsx'
 import { FaqSection } from './components/FaqSection.tsx'
+import { Reveal } from './components/Reveal.tsx'
 import { Footer } from './components/Footer.tsx'
 
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <div className="min-h-screen bg-[#fafafc] dark:bg-[#090a0f] text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-indigo-500/20 selection:text-indigo-800 dark:selection:bg-indigo-500/30 dark:selection:text-indigo-200 transition-colors duration-200">
+        <div className="min-h-screen bg-bg text-fg flex flex-col font-sans">
           {/* Accessible Skip Link */}
           <a
             href="#main-content"
-            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:font-semibold focus:text-xs focus:rounded-xl focus:shadow-2xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2 focus:bg-fg focus:text-bg focus:font-semibold focus:text-xs focus:rounded-xl focus:shadow-2xl"
           >
             Skip to main content
           </a>
@@ -33,24 +34,24 @@ export const App: React.FC = () => {
             <HeroSection />
 
             {/* 2. Interactive Multi-Agent Orchestration Playground */}
-            <AgentOrchestrationDemo />
+            <Reveal><AgentOrchestrationDemo /></Reveal>
 
             {/* 3. Bento Grid of 6 Core Pillars */}
-            <BentoFeatures />
+            <Reveal><BentoFeatures /></Reveal>
 
             {/* 4. Rust Security & Architectural Guarantees */}
             <div id="architecture">
-              <SecurityArchitecture />
+              <Reveal><SecurityArchitecture /></Reveal>
             </div>
 
             {/* 5. Direct Comparison Table */}
-            <ComparisonTable />
+            <Reveal><ComparisonTable /></Reveal>
 
             {/* 6. Windows Download & Quickstart */}
-            <DownloadSection />
+            <Reveal><DownloadSection /></Reveal>
 
             {/* 7. Comprehensive FAQ */}
-            <FaqSection />
+            <Reveal><FaqSection /></Reveal>
           </main>
 
           {/* Footer */}
