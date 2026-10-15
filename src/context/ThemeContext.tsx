@@ -35,7 +35,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]')
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', theme === 'dark' ? '#090a0f' : '#fafafc')
+      metaThemeColor.setAttribute('content', theme === 'dark' ? '#121212' : '#ffffff')
     }
     try {
       localStorage.setItem('hubbub_theme', theme)
